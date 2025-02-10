@@ -124,12 +124,23 @@ function insert_into_table() {
 }
 
 function select_from_table() {
-    table=$(zenity --entry --title="Select Data" --text="Enter table name:")
+    table=$(zenity --entry --title="Select Table" --text="Enter table name to view:")
     if [ -f "$table.txt" ]; then
-        content=$(cat "$table.txt")
-        zenity --text-info --title="Table: $table" --filename="$table.txt"
+        header=$(head -n 1 "$table.txt" | sed 's/|/ /g')
+        data=$(tail -n +2 "$table.txt")
+
+        formatted_data=""
+        while IFS= read -r line; do
+            formatted_data+="$(echo "$line" | sed 's/,/ /g') "
+        done <<< "$data"
+        
+        if [ -z "$formatted_data" ]; then
+            zenity --info --text="Table '$table' is empty."
+        else
+            zenity --list --title="Table: $table" --column="$header" $formatted_data
+        fi
     else
-        zenity --error --text="Table does not exist!"
+        zenity --error --text="Table '$table' does not exist!"
     fi
     database_menu
 }
